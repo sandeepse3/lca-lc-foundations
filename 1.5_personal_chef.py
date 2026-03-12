@@ -1,10 +1,13 @@
+# %%
 from dotenv import load_dotenv
-
-load_dotenv()
-
 from langchain.tools import tool
 from typing import Dict, Any
 from tavily import TavilyClient
+from langchain.agents import create_agent
+from langchain.messages import HumanMessage
+
+load_dotenv()
+
 
 tavily_client = TavilyClient()
 
@@ -25,10 +28,12 @@ Return recipe suggestions and eventually the recipe instructions to the user, if
 
 """
 
-from langchain.agents import create_agent
-
 agent = create_agent(
     model="gpt-5-nano",
     tools=[web_search],
     system_prompt=system_prompt
 )
+
+response = agent.invoke({"messages": [HumanMessage(content="I have chicken, rice, and broccoli. What can I make for dinner?")]})
+print(response)
+# %%
