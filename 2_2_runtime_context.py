@@ -1,36 +1,74 @@
 # %%
-from pprint import pprint
-from typing import Any, Dict
-
 from dotenv import load_dotenv
-from langchain.agents import create_agent
-from langchain.messages import HumanMessage
-from langchain.tools import tool
-from tavily import TavilyClient
 
 load_dotenv()
 
-tavily_client = TavilyClient()
+# %%
+from dataclasses import dataclass
 
+@dataclass
+class ColourContext:
+    favourite_colour: str = "blue"
+    least_favourite_colour: str = "yellow"
 
-@tool
-def web_search(query: str) -> Dict[str, Any]:
-    """Search the web for information"""
-    return tavily_client.search(query)
-
-
-# Optional quick local test:
-# result = web_search.invoke("Who is the current mayor of San Francisco?")
-# print(result)
+# %%
+from langchain.agents import create_agent
 
 agent = create_agent(
     model="gpt-5-nano",
-    tools=[web_search],
+    context_schema=ColourContext  
 )
 
-question = HumanMessage(content="Who is the current mayor of San Francisco?")
-response = agent.invoke({"messages": [question]})
-
-print(response["messages"][-1].content)
-pprint(response["messages"])
 # %%
+from langchain.messages import HumanMessage
+
+response = agent.invoke(
+    {"messages": [HumanMessage(content="What is my favourite colour?")]},
+    context=ColourContext()
+)
+
+# %%
+from pprint import pprint
+
+pprint(response)
+
+# ## Accessing Context
+
+# %%
+from langchain.tools import tool, ToolRuntime
+
+@tool
+def get_favourite_colour(runtime: ToolRuntime) -> str:
+    """Get the favourite colour of the user"""
+    return runtime.context.favourite_colour
+
+@tool
+def get_least_favourite_colour(runtime: ToolRuntime) -> str:
+    """Get the least favourite colour of the user"""
+    return runtime.context.least_favourite_colour
+
+# %%
+agent = create_agent(
+    model="gpt-5-nano",
+    tools=[get_favourite_colour, get_least_favourite_colour],
+    context_schema=ColourContext
+)
+
+# %%
+response = agent.invoke(
+    {"messages": [HumanMessage(content="What is my favourite colour?")]},
+    context=ColourContext()
+)
+
+pprint(response)
+
+# %%
+response = agent.invoke(
+    {"messages": [HumanMessage(content="What is my favourite colour?")]},
+    context=ColourContext(favourite_colour="green")
+)
+
+pprint(response)
+
+# %%
+

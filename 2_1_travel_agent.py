@@ -1,36 +1,50 @@
 # %%
-from pprint import pprint
-from typing import Any, Dict
-
 from dotenv import load_dotenv
-from langchain.agents import create_agent
-from langchain.messages import HumanMessage
-from langchain.tools import tool
-from tavily import TavilyClient
 
 load_dotenv()
 
-tavily_client = TavilyClient()
+# %%
+from langchain_mcp_adapters.client import MultiServerMCPClient
 
-
-@tool
-def web_search(query: str) -> Dict[str, Any]:
-    """Search the web for information"""
-    return tavily_client.search(query)
-
-
-# Optional quick local test:
-# result = web_search.invoke("Who is the current mayor of San Francisco?")
-# print(result)
-
-agent = create_agent(
-    model="gpt-5-nano",
-    tools=[web_search],
+client = MultiServerMCPClient(
+    {
+        "travel_server": {
+                "transport": "streamable_http",
+                "url": "https://mcp.kiwi.com"
+            }
+    }
 )
 
-question = HumanMessage(content="Who is the current mayor of San Francisco?")
-response = agent.invoke({"messages": [question]})
+tools = await client.get_tools()
 
-print(response["messages"][-1].content)
-pprint(response["messages"])
 # %%
+from langchain.agents import create_agent
+from langgraph.checkpoint.memory import InMemorySaver
+
+agent = create_agent(
+    "gpt-5-nano",
+    tools=tools,
+    checkpointer=InMemorySaver(),
+    system_prompt="You are a travel agent. No follow up questions."
+)
+
+# %%
+from langchain.messages import HumanMessage
+
+config = {"configurable": {"thread_id": "1"}}
+
+response = await agent.ainvoke(
+    {"messages": [HumanMessage(content="Get me a direct flight from San Francisco to Tokyo on March 31st")]},
+    config
+    )
+
+# %%
+from pprint import pprint
+
+pprint(response)
+
+# %%
+print(response["messages"][-1].content)
+
+# %%
+
