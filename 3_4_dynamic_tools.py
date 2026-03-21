@@ -1,13 +1,15 @@
-# %%
+from dataclasses import dataclass
+from typing import Callable, Dict, Any
+
 from dotenv import load_dotenv
+from langchain.agents import create_agent
+from langchain.agents.middleware import wrap_model_call, ModelRequest, ModelResponse
+from langchain.messages import HumanMessage
+from langchain.tools import tool
+from langchain_community.utilities import SQLDatabase
+from tavily import TavilyClient
 
 load_dotenv()
-
-# %%
-from langchain.tools import tool
-from typing import Dict, Any
-from tavily import TavilyClient
-from langchain_community.utilities import SQLDatabase
 
 tavily_client = TavilyClient()
 
@@ -31,20 +33,14 @@ def sql_query(query: str) -> str:
     except Exception as e:
         return f"Error: {e}"
 
-# %%
-from dataclasses import dataclass
-
 @dataclass
 class UserRole:
     user_role: str = "external"
 
-# %%
-from langchain.agents.middleware import wrap_model_call, ModelRequest, ModelResponse
-from typing import Callable
 
 @wrap_model_call
-def dynamic_tool_call(request: ModelRequest, 
-handler: Callable[[ModelRequest], ModelResponse]) -> ModelResponse:
+def dynamic_tool_call(request: ModelRequest,
+                      handler: Callable[[ModelRequest], ModelResponse]) -> ModelResponse:
 
     """Dynamically call tools based on the runtime context"""
 
@@ -58,18 +54,12 @@ handler: Callable[[ModelRequest], ModelResponse]) -> ModelResponse:
 
     return handler(request)
 
-# %%
-from langchain.agents import create_agent
-
 agent = create_agent(
     model="gpt-5-nano",
     tools=[web_search, sql_query],
     middleware=[dynamic_tool_call],
     context_schema=UserRole
 )
-
-# %%
-from langchain.messages import HumanMessage
 
 response = agent.invoke(
     {"messages": [HumanMessage(content="How many artists are in the database?")]},
@@ -79,4 +69,3 @@ response = agent.invoke(
 print(response["messages"][-1].content)
 
 # %%
-

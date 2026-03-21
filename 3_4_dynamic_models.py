@@ -1,20 +1,22 @@
-# %%
+from typing import Callable
+
 from dotenv import load_dotenv
-
-load_dotenv()
-
-# %%
+from langchain.agents import create_agent
 from langchain.agents.middleware import wrap_model_call, ModelRequest, ModelResponse
 from langchain.chat_models import init_chat_model
-from typing import Callable
+from langchain.messages import AIMessage, HumanMessage
+
+load_dotenv()
 
 large_model = init_chat_model("claude-sonnet-4-5")
 standard_model = init_chat_model("gpt-5-nano")
 
 
 @wrap_model_call
-def state_based_model(request: ModelRequest, 
-handler: Callable[[ModelRequest], ModelResponse]) -> ModelResponse:
+def state_based_model(
+    request: ModelRequest,
+    handler: Callable[[ModelRequest], ModelResponse],
+) -> ModelResponse:
     """Select model based on State conversation length."""
     # request.messages is a shortcut for request.state["messages"]
     message_count = len(request.messages)  
@@ -30,17 +32,11 @@ handler: Callable[[ModelRequest], ModelResponse]) -> ModelResponse:
 
     return handler(request)
 
-# %%
-from langchain.agents import create_agent
-
 agent = create_agent(
     model="gpt-5-nano",
     middleware=[state_based_model],
     system_prompt="You are roleplaying a real life helpful office intern."
 )
-
-# %%
-from langchain.messages import HumanMessage
 
 response = agent.invoke(
     {"messages": [
@@ -52,9 +48,6 @@ print(response["messages"][-1].content)
 
 # %%
 print(response["messages"][-1].response_metadata["model_name"])
-
-# %%
-from langchain.messages import AIMessage
 
 response = agent.invoke(
     {"messages": [
@@ -78,4 +71,3 @@ print(response["messages"][-1].content)
 print(response["messages"][-1].response_metadata["model_name"])
 
 # %%
-

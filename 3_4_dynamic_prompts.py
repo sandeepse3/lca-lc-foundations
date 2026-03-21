@@ -1,11 +1,11 @@
-# %%
+from dataclasses import dataclass
+
 from dotenv import load_dotenv
+from langchain.agents import create_agent
+from langchain.agents.middleware import dynamic_prompt, ModelRequest
+from langchain.messages import HumanMessage
 
 load_dotenv()
-
-# %%
-from dataclasses import dataclass
-from langchain.agents.middleware import dynamic_prompt, ModelRequest
 
 @dataclass
 class LanguageContext:
@@ -22,17 +22,11 @@ def user_language_prompt(request: ModelRequest) -> str:
     elif user_language == "English":
         return base_prompt
 
-# %%
-from langchain.agents import create_agent
-
 agent = create_agent(
     model="gpt-5-nano",
     context_schema=LanguageContext,
     middleware=[user_language_prompt]
 )
-
-# %%
-from langchain.messages import HumanMessage
 
 response = agent.invoke(
     {"messages": [HumanMessage(content="Hello, how are you?")]},
@@ -41,18 +35,12 @@ response = agent.invoke(
 
 print(response["messages"][-1].content)
 
-# %%
-from langchain.messages import HumanMessage
-
 response = agent.invoke(
     {"messages": [HumanMessage(content="Hello, how are you?")]},
     context=LanguageContext(user_language="Spanish")
 )
 
 print(response["messages"][-1].content)
-
-# %%
-from langchain.messages import HumanMessage
 
 response = agent.invoke(
     {"messages": [HumanMessage(content="Hello, how are you?")]},
@@ -62,4 +50,3 @@ response = agent.invoke(
 print(response["messages"][-1].content)
 
 # %%
-

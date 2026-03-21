@@ -1,30 +1,33 @@
-# %%
 from dotenv import load_dotenv
+from langchain.agents import create_agent, AgentState
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+from langchain.messages import HumanMessage
+from langchain.tools import tool, ToolRuntime
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.types import Command
+from pprint import pprint
 
 load_dotenv()
 
 # %%
-from langchain.tools import tool, ToolRuntime
-
 @tool
 def read_email(runtime: ToolRuntime) -> str:
     """Read an email from the given address."""
     # take email from state
     return runtime.state["email"]
 
+
 @tool
 def send_email(body: str) -> str:
     """Send an email to the given address with the given subject and body."""
     # fake email sending
-    return f"Email sent"
+    return "Email sent"
+
 
 # %%
-from langchain.agents import create_agent, AgentState
-from langgraph.checkpoint.memory import InMemorySaver
-from langchain.agents.middleware import HumanInTheLoopMiddleware
-
 class EmailState(AgentState):
     email: str
+
 
 agent = create_agent(
     model="gpt-5-nano",
@@ -42,50 +45,54 @@ agent = create_agent(
     ],
 )
 
-# %%
-from langchain.messages import HumanMessage
 
+# %%
 config = {"configurable": {"thread_id": "1"}}
 
 response = agent.invoke(
     {
-        "messages": [HumanMessage(content="Please read my email and send a response immediately. Send the reply now in the same thread.")],
+        "messages": [
+            HumanMessage(content="Please read my email and send a response immediately. Send the reply now in the same thread.")
+        ],
         "email": "Hi Seán, I'm going to be late for our meeting tomorrow. Can we reschedule? Best, John."
     },
-    config=config
+    config=config,
 )
 
-# %%
-from pprint import pprint
 
+# %%
 pprint(response)
+
 
 # %%
 print(response['__interrupt__'])
+
 
 # %%
 # Access just the 'body' argument from the tool call
 print(response['__interrupt__'][0].value['action_requests'][0]['args']['body'])
 
+
 # ## Approve
 
 # %%
-from langgraph.types import Command
-
 response = agent.invoke(
-    Command( 
+    Command(
         resume={"decisions": [{"type": "approve"}]}
-    ), 
-    config=config # Same thread ID to resume the paused conversation
+    ),
+    config=config,  # Same thread ID to resume the paused conversation
 )
 
+
+# %%
 pprint(response)
+
 
 # ## Reject
 
 # %%
 response = agent.invoke(
-    Command(        
+    Command(
         resume={
             "decisions": [
                 {
@@ -95,20 +102,24 @@ response = agent.invoke(
                 }
             ]
         }
-    ), 
-    config=config # Same thread ID to resume the paused conversation
-    )   
+    ),
+    config=config,  # Same thread ID to resume the paused conversation
+)
 
+
+# %%
 pprint(response)
+
 
 # %%
 print(response['__interrupt__'][0].value['action_requests'][0]['args']['body'])
+
 
 # ## Edit
 
 # %%
 response = agent.invoke(
-    Command(        
+    Command(
         resume={
             "decisions": [
                 {
@@ -124,11 +135,10 @@ response = agent.invoke(
                 }
             ]
         }
-    ), 
-    config=config # Same thread ID to resume the paused conversation
-    )   
+    ),
+    config=config,  # Same thread ID to resume the paused conversation
+)
 
-pprint(response)
 
 # %%
-
+pprint(response)

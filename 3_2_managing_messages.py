@@ -1,14 +1,17 @@
-# %%
 from dotenv import load_dotenv
+from langchain.agents import AgentState, create_agent
+from langchain.agents.middleware import SummarizationMiddleware, before_agent
+from langchain.messages import AIMessage, HumanMessage, RemoveMessage, ToolMessage
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.runtime import Runtime
+from pprint import pprint
+from typing import Any
 
 load_dotenv()
 
-# ## Summarize messages
+## Summarize messages
 
 # %%
-from langchain.agents import create_agent
-from langgraph.checkpoint.memory import InMemorySaver
-from langchain.agents.middleware import SummarizationMiddleware
 
 agent = create_agent(
     model="gpt-5-nano",
@@ -23,9 +26,6 @@ agent = create_agent(
 )
 
 # %%
-from langchain.messages import HumanMessage, AIMessage
-from pprint import pprint
-
 response = agent.invoke(
     {"messages": [
         HumanMessage(content="What is the capital of the moon?"),
@@ -47,14 +47,6 @@ pprint(response)
 print(response["messages"][0].content)
 
 # ## Trim/delete messages
-
-# %%
-from typing import Any
-from langchain.agents import AgentState
-from langchain.messages import RemoveMessage
-from langgraph.runtime import Runtime
-from langchain.agents.middleware import before_agent
-from langchain.messages import ToolMessage
 
 @before_agent
 def trim_messages(state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
@@ -92,4 +84,3 @@ pprint(response)
 print(response["messages"][-1].content)
 
 # %%
-
