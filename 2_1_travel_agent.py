@@ -1,10 +1,11 @@
 import asyncio
 from pprint import pprint
+
+from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain.messages import HumanMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.checkpoint.memory import InMemorySaver
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -44,9 +45,6 @@ async def main():
     print()
     pprint(response["messages"][-1].content)
 
-
-if __name__ == "__main__":
-    asyncio.run(main())
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -32,14 +32,6 @@ agent = create_agent(
 question = HumanMessage(content="Who is the current mayor of San Francisco?")
 response = agent.invoke({"messages": [question]})
 
+pprint(response["messages"])
+# %%
 print(response["messages"][-1].content)
-pprint(response["messages"])
-# %%
-pprint(response["messages"])
-# %%
-pprint(response["messages"])
-# %%
-pprint(response["messages"])
-# %%
-pprint(response["messages"])
-# %%
