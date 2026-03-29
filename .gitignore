@@ -211,3 +211,8 @@ __marimo__/
 
 # Sandeep
 .DS_Store
+.antigravity/
+.claude/
+.copilot/
+.gemini/
+.ollama/
